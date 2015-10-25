@@ -2,7 +2,7 @@
 title: "Machine Learning Project"
 author: "Gary Baggett (Isleguard)"
 date: "Saturday, October 17, 2015"
-output: pdf_document
+output: html_document
 ---
 ###Executive Summary
 The answer to the question:  How to determine the "classe" output using various machine learning techniques and then use that information to determine the "classe" of proper weighlifting curls.  Several methods were used to determine  the correct output. It was finally determined to use the Random Forest method as it is a non-linear method.
@@ -51,8 +51,8 @@ library(parallel)
 trainingfile<-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 testingfile<-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 
-#traindata<-read.csv(trainingfile, header=TRUE)
-#testdata <-read.csv(testingfile, header=TRUE)
+traindata<-read.csv(trainingfile, header=TRUE)
+testdata <-read.csv(testingfile, header=TRUE)
 
 #save the data locally
 #write.csv(traindata,file="traindata.csv", sep=",", col.names=TRUE)
