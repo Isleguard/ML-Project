@@ -1,0 +1,167 @@
+---
+title: "Machine Learning Project"
+author: "Gary Baggett (Isleguard)"
+date: "Saturday, October 17, 2015"
+output: html_document
+---
+###Executive Summary
+The answer to the question:  How to determine the "classe" output using various machine learning techniques and then use that information to determine the "classe" of proper weighlifting curls.  Several methods were used to determine  the correct output. It was finally determined to use the Random Forest method as it is a non-linear method.
+
+A non-linear method was chosen because, non-linear can do linear but linear cannot do non-linear well.
+
+The process to generate the answer to this question if below.  Use the instructor provided script [see Appendix] to create the required answer files.
+
+
+###Background Information
+Data used with permission comes from:
+
+Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6.
+Cited by 2 (Google Scholar) 
+
+###Movement Classifications involved from the above paper:
+"Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E)."
+
+**From this we learn the Classification type;**  
+A.  Correctly performed exercise  
+B.  Throwing the elbows to the front - Yaw  
+C.  Lifting the dumbbell only halfway - partial movement   
+D.  Lowering the dumbbell only halfway - partial movement   
+E.  Throwing the hips to the front - belt moves too much   
+
+**Notes:  Variables in dataset**   
+1. Yaw:    one elbow moves to the front - should be weaker side  
+2. Pitch:  moving the barbell up and down  
+3. Roll:   Raising one arm up faster than the other   
+
+```{r,echo=FALSE}
+###################
+#  libraries
+###################
+library(caret)  # also loads lattice and ggplot2
+library(randomForest)
+library(plyr)
+library(dplyr)
+library(parallel)
+
+######################################################
+#  This code is commented out to speed up the process
+#  To test properly, uncomment out this code and run
+######################################################
+
+trainingfile<-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testingfile<-"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+#traindata<-read.csv(trainingfile, header=TRUE)
+#testdata <-read.csv(testingfile, header=TRUE)
+
+#save the data locally
+#write.csv(traindata,file="traindata.csv", sep=",", col.names=TRUE)
+#write.csv(testdata, file="testdata.csv",sep=",",col.names=TRUE)
+###############################
+#  Get the names of the columns
+xc<-names(traindata)
+# and put into a new table along with the data for
+# subject name, timestamp info and windowing information
+# and lastly the outcome [classe, column 160]
+#tdata <-select(traindata,c(2,3,4,6,7,nacc,160))
+#  now create the test data set the same wayvp<-tdata[,-c(1:5)]
+
+xc<-names(testdata)
+gc1<- grep("roll",xc)
+gc2<- grep("pitch", xc)
+gc3<- grep("yaw",xc)
+gc4<- grep("acc",xc)
+gc<-c(gc1,gc2,gc3,gc4,160)   # must include the classe column
+trdata<-select(traindata,gc)
+#View(trdata)
+nc<-names(trdata)
+nc1<-grep("min",nc)
+nc2<-grep("avg",nc)
+nc3<-grep("stddev", nc)
+nc4<-grep("var_",nc)
+nc5<-grep("kurtosis", nc)
+nc6<-grep("skew", nc)
+trdata1<-select(trdata, -c(nc1,nc2,nc3,nc4,nc5))
+#View(trdata1)
+nc6<-grep("skewness", nc)
+nc7<-grep("max", nc)
+nc8<-grep("amplitude", nc)
+nc0<-c(nc1,nc2,nc3,nc4,nc5,nc6,nc7,nc8)
+trdata1<-select(trdata,-nc0)
+trdata2<-select(trdata1,-c(1,2))
+
+```
+
+
+###Exploratory Data Analysis
+Multiple methods of analysis were performed the data from the different trials are not shown as part of this document.
+
+**Methods tested in the EDA**
+1.Rpart  
+2.Random Forrest  
+3.BagRboostR  
+4.Party  
+5.bagFDA  
+
+By checking the required variables many of the 159 data variables were removed. The 160th variable is the outcome as produced by the authors of the original work - cited above.
+
+The linear prediction and generalized linear prediction models were not used due to the thinking that due to the nonlinear effects of the movement and types of movement involved that either the bagging or the Random Forest methods would be the best.  
+
+I chose the Random Forest because it is a non-linear method.  It seemed to provide the best overall data selections due to the group (nearest neighbor) member selection.  
+
+**The thought occurred to me also that non-linear models will show linear output when needed, but linear models will not do a good job predicting with non-linear data.  Therefore choose the non-linear prediction method over any generalized linear prediction method unless the EDA shows otherwise**
+
+Within the EDA, the ability to show the importance of the various variables results in an interesting listing.
+
+```{r,echo=TRUE}
+set.seed(1954)         #set the random number seed for reproducability
+print(nvz<-nearZeroVar(trdata2,saveMetrics=TRUE))
+####  Now run the training setup and show the output
+rf<-randomForest(formula=classe~. ,data=trdata2, ntree=500,replace=TRUE,importance=TRUE)
+
+#   R command:  varImp(rf, value = "rf", scale=TRUE)**
+print(v<-varImp(rf, value = "rf", scale=TRUE))
+
+```  
+Show the plot of the errors.
+```{r,echo=TRUE}
+pdataa<-as.matrix(rf$err.rate)
+pdata<-as.data.frame(pdataa)
+plot(x=1:500,y=pdata$A, xlab="Number of Trees",ylab="Probability Error Values", type="l")
+lines(x=1:500,y=pdata$B,col="green")
+lines(x=1:500,y=pdata$C,col="blue")
+lines(x=1:500,y=pdata$D,col="red")
+lines(x=1:500,y=pdata$E,col="grey")
+lines(x=1:500,y=pdata$OOB,col="orange")
+```
+
+
+###Conclusion
+
+The Random Forest model correctly predicted and confirmed the statement by the authors about their ability to predict the performance of the "curl" exercise.
+
+The "Confusion Matrix" for the data;
+
+```{r,echo=TRUE}
+print(rf$confusion)
+```
+
+##Appendix 
+
+**Notes**
+
+```
+#####################################
+#   Instructor Provided Script below
+#   to generate the answer files
+#####################################
+#pml_write_files = function(x){
+#  n = length(x)
+#  for(i in 1:n){
+#    filename = paste0("problem_id_",i,".txt")
+#    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+#  }
+#}
+# pml_write_files(rf.prediction)
+
+```

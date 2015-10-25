@@ -1,0 +1,96 @@
+Project Notes
+
+See the RMD also
+
+Carlitos  data is from rows 1:165
+Pedro's  data is from row 166:693
+
+ Windows
+Carlito's window starts row:  24  train$new.window =yes   column 4      Type a: ?
+Carlito's window starts row:  52  train$new.window =yes   column 4       Type b: ?
+Carlito's window starts row:  76                                                                 Type c ?
+Carlito's window starts row:  165                                                                Type d
+
+Pedro windows :  166
+Pedro windows :  210
+Pedro windows :  241
+Pedro windows :  314
+Pedro windows :  401
+Pedro windows :  463
+Pedro windows :  476
+Pedro windows :  506
+Pedro windows :  532
+Pedro windows :  552
+Pedro windows :  581
+Pedro windows :  599
+Pedro windows :  645
+adelmo window :  694
+adelmo window :  749
+adelmo window :  772
+adelmo window  
+
+
+Which is the output variable?? classe = variable # 160,  100 is max seen on the View()
+
+to use all covariates
+modFitAll <- train(wage ~.  ,data = training, method="lm")
+pred <- predict(modFitAll, testing)
+qplot(wage,pred,data=testing)
+
+
+modFit <- train(classe~. , method="rpart", data=tdatan)
+
+
+
+
+
+***********************************************
+library(caret)      -> loads lattice and ggplot
+library(rpart)
+library(party)
+library(rattle)
+library(rpart.part)
+
+
+ modFit <- train(classe~. , method="rpart", data=tdatan)
+ print ( modFit$finalModel )    => produces data 
+
+RandomForrest
+modFit<-train(classe~.,data=vp,method="rf", prox=TRUE)
+
+> nvz<-nearZeroVar(vp1,saveMetrics=TRUE)
+> nvz
+                                   freqRatio      %Unique    zeroVar   nzv
+total_accel_belt          1.063160     0.1477933   FALSE FALSE
+accel_belt_x               1.055412     0.8357966   FALSE FALSE
+accel_belt_y               1.113725     0.7287738   FALSE FALSE
+accel_belt_z               1.078767     1.5237998   FALSE FALSE
+total_accel_arm          1.024526     0.3363572   FALSE FALSE
+accel_arm_x               1.017341     3.9598410   FALSE FALSE
+accel_arm_y               1.140187     2.7367241   FALSE FALSE
+accel_arm_z               1.128000     4.0362858   FALSE FALSE
+total_accel_dumbbell  1.072634     0.2191418   FALSE FALSE
+accel_dumbbell_x       1.018018     2.1659362   FALSE FALSE
+accel_dumbbell_y       1.053061     2.3748853   FALSE FALSE
+accel_dumbbell_z       1.133333     2.0894914   FALSE FALSE
+total_accel_forearm    1.128928     0.3567424   FALSE FALSE
+accel_forearm_x         1.126437     4.0464784   FALSE FALSE
+accel_forearm_y         1.059406     5.1116094    FALSE FALSE
+accel_forearm_z         1.006250     2.9558659   FALSE FALSE
+classe                          1.469581     0.0254816   FALSE FALSE
+> 
+modFit$finalMod
+n= 19622 
+
+node), split, n, loss, yval, (yprob)
+      * denotes terminal node
+
+ 1) root 19622 14042 A (0.28 0.19 0.17 0.16 0.18)  
+   2) accel_belt_z>=-187.5 18587 13013 A (0.3 0.2 0.18 0.17 0.14)  
+     4) accel_arm_x< -270.5 3122  1138 A (0.64 0.11 0.14 0.047 0.067) *
+     5) accel_arm_x>=-270.5 15465 11875 A (0.23 0.22 0.19 0.2 0.15)  
+      10) accel_dumbbell_x< 38.5 14213 10673 A (0.25 0.2 0.21 0.21 0.13)  
+        20) accel_forearm_x>=-99.5 8185  5775 A (0.29 0.23 0.24 0.1 0.13) *
+        21) accel_forearm_x< -99.5 6028  3859 D (0.19 0.16 0.16 0.36 0.13) *
+      11) accel_dumbbell_x>=38.5 1252   610 B (0.04 0.51 0.024 0.046 0.38) *
+   3) accel_belt_z< -187.5 1035     7 E (0.0058 0.00097 0 0 0.99) 
